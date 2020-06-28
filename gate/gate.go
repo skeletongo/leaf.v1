@@ -1,6 +1,8 @@
 package gate
 
 import (
+	"net"
+	"reflect"
 	"time"
 
 	"github.com/skeletongo/leaf.v1/chanrpc"
@@ -123,4 +125,42 @@ func (a *agent) OnClose() {
 	if err := a.gate.AgentChanRPC.Call0("CloseAgent", a); err != nil {
 		log.Error("CloseAgent error: %v", err)
 	}
+}
+
+func (a *agent) WriteMsg(msg interface{}) {
+	if a.gate.Processor != nil {
+		data, err := a.gate.Processor.Marshal(msg)
+		if err != nil {
+			log.Error("marshal message %v error: %v", reflect.TypeOf(msg), err)
+			return
+		}
+		err = a.conn.WriteMsg(data...)
+		if err != nil {
+			log.Error("write message %v error: %v", reflect.TypeOf(msg), err)
+		}
+	}
+}
+
+func (a *agent) LocalAddr() net.Addr {
+	return a.conn.LocalAddr()
+}
+
+func (a *agent) RemoteAddr() net.Addr {
+	return a.conn.RemoteAddr()
+}
+
+func (a *agent) Close() {
+	a.conn.Close()
+}
+
+func (a *agent) Destroy() {
+	a.conn.Destroy()
+}
+
+func (a *agent) UserData() interface{} {
+	return a.userData
+}
+
+func (a *agent) SetUserData(data interface{}) {
+	a.userData = data
 }
